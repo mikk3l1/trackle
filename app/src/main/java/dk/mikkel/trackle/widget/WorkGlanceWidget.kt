@@ -19,6 +19,7 @@ import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.appwidget.provideContent
 import androidx.glance.layout.Spacer
+import androidx.compose.ui.graphics.Color
 import androidx.glance.unit.ColorProvider
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
@@ -97,14 +98,14 @@ class WorkGlanceWidget : GlanceAppWidget() {
                 ) {
                     ActionButton(
                         label = "KOM",
-                        background = GlanceTheme.colors.primary,
+                        background = ColorProvider(Color(0xFF2E7D32)), // green = starte (start)
                         onClick = actionSendBroadcast<WorkKomReceiver>(),
                         modifier = GlanceModifier.defaultWeight()
                     )
                     Spacer(GlanceModifier.width(8.dp))
                     ActionButton(
                         label = "GÅ",
-                        background = GlanceTheme.colors.secondary,
+                        background = ColorProvider(Color(0xFFC62828)), // red = slutte (stop)
                         onClick = actionSendBroadcast<WorkGaReceiver>(),
                         modifier = GlanceModifier.defaultWeight()
                     )
@@ -131,7 +132,7 @@ class WorkGlanceWidget : GlanceAppWidget() {
                 style = TextStyle(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = GlanceTheme.colors.onPrimary
+                    color = ColorProvider(Color.White)
                 ),
                 maxLines = 1
             )

@@ -180,3 +180,11 @@ Do not invent APIs when docs can be checked.
 # Execution Order
 Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → DONE
 Do not skip ahead unless explicitly instructed.
+
+# Execution Log
+## Phase 1 – ✅ DONE (2026-09-08)
+- Created `ui/HomeScreen.kt`: shows work status ("På arbejde" / "Ikke på arbejde"), today's total ("I dag: X t Y min"), and a "Eksportér CSV" button (wired up in Phase 5).
+- `MainActivity.kt` now hosts `HomeScreen` via a `WorkViewModel` (`WorkUiState` in `MainActivity.kt`).
+- UI language assumption: **Danish** (KOM/GÅ implies DK). Say the word if Norwegian is wanted.
+- Invalid sequences (KOM→KOM, GÅ→GÅ): presses will be ignored, current status kept.
+- `.\gradlew :app:assembleDebug` → **BUILD SUCCESSFUL**. Committed.

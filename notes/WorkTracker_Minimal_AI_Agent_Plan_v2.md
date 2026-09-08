@@ -198,3 +198,18 @@ Do not skip ahead unless explicitly instructed.
 - `WorkViewModel.kt` (moved out of MainActivity): `WorkUiState(isWorking, todayTotalSeconds)`, `refresh()` reads Room; `todayTotalSeconds` is still 0 — computed in Phase 4.
 - Unit tests `data/WorkRepositoryTest.kt`: 5/5 pass (first event OK, double-KOM rejected, double-GÅ rejected, multiple periods per day, seconds ignored).
 - `.\gradlew :app:assembleDebug :app:testDebugUnitTest` → **BUILD SUCCESSFUL**. Committed.
+
+## Phase 3 – ✅ DONE (2026-09-08)
+- Glance **1.1.1** added (1.2.0 is a rewrite that drops the app-action-button API; 1.1.1 keeps `actionSendBroadcast`).
+- `widget/WorkGlanceWidget.kt`: status ("På arbejde"/"Ikke på arbejde"), "I dag: X t Y min", and KOM / GÅ buttons using `actionSendBroadcast` + `GlanceTheme` (light/dark auto).
+- `widget/WorkKomReceiver.kt` / `widget/WorkGaReceiver.kt`: record the event via the same `WorkRepository` + Room singleton, then `updateAll(context)`.
+- Manifest: `WorkWidgetReceiver` (appwidget provider) + two action receivers; `res/xml/work_widget_info.xml` (4x2 target, 2x2 min).
+- Note: `provideContent`, Glance's `FontWeight` (Normal/Medium/Bold) and `RowScope.defaultWeight()` are the 1.1.1 API shapes (verified against the released AAR).
+- `.\gradlew :app:assembleDebug` → **BUILD SUCCESSFUL**. On-device widget test pending (needs real device — Phase 3 "STOP and test on real device").
+
+## Phase 4 – ✅ DONE (2026-09-08)
+- `domain/WorkStats.kt`: `totalSecondsForDay(events, day, zone, nowEpochSeconds)` — pairs each KOM with the following GÅ per local day; an open (active) KOM uses `now` as the end; other days excluded.
+- `WorkViewModel.refresh()` now computes `todayTotalSeconds` from raw events (no stored timer values).
+- `MainActivity` calls `refresh()` on resume so widget-recorded events show up.
+- Unit tests `domain/WorkStatsTest.kt`: 5/5 pass (empty day, one period, multiple periods/day, active period with current time, other dates excluded).
+- `.\gradlew :app:assembleDebug :app:testDebugUnitTest` → **BUILD SUCCESSFUL** (all 11 tests pass). Committed (with Phase 3).

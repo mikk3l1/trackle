@@ -6,9 +6,13 @@ import androidx.lifecycle.viewModelScope
 import dk.mikkel.trackle.data.EventType
 import dk.mikkel.trackle.data.WorkDatabase
 import dk.mikkel.trackle.data.WorkEvent
+import dk.mikkel.trackle.data.WorkRepository
+import dk.mikkel.trackle.domain.WorkStats
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneId
 
 /** Immutable snapshot of what the UI displays. */
 data class WorkUiState(
@@ -34,8 +38,17 @@ class WorkViewModel(appContext: Context) : ViewModel() {
      */
     fun refresh() {
         viewModelScope.launch {
-            val last = dao.lastEvent()
-            _state.value = WorkUiState(isWorking = last?.type == EventType.KOM)
+            val events = dao.allEvents()
+            val zone = ZoneId.systemDefault()
+            _state.value = WorkUiState(
+                isWorking = events.lastOrNull()?.type == EventType.KOM,
+                todayTotalSeconds = WorkStats.totalSecondsForDay(
+                    events = events,
+                    day = LocalDate.now(zone),
+                    zone = zone,
+                    nowEpochSeconds = WorkRepository.currentMinuteTimestampSeconds()
+                )
+            )
         }
     }
 

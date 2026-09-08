@@ -40,4 +40,10 @@ class MainActivity : ComponentActivity() {
 
         workViewModel.refresh()
     }
+
+    /** The widget may have recorded events while the app was in the background. */
+    override fun onResume() {
+        super.onResume()
+        workViewModel.refresh()
+    }
 }

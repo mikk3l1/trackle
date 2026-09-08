@@ -188,3 +188,13 @@ Do not skip ahead unless explicitly instructed.
 - UI language assumption: **Danish** (KOM/GÅ implies DK). Say the word if Norwegian is wanted.
 - Invalid sequences (KOM→KOM, GÅ→GÅ): presses will be ignored, current status kept.
 - `.\gradlew :app:assembleDebug` → **BUILD SUCCESSFUL**. Committed.
+
+## Phase 2 – ✅ DONE (2026-09-08)
+- Room 2.8.4 + KSP 2.2.10-2.0.2 added (version catalog updated; `android.disallowKotlinSourceSets=false` added to gradle.properties to satisfy AGP 9 built-in Kotlin + KSP).
+- `data/WorkEvent.kt`: entity `id`, `timestamp` (epoch **seconds**, truncated to the minute), `type` (`KOM`/`GA`).
+- `data/WorkEventDao.kt`: `insert`, `lastEvent`, `allEvents`.
+- `data/WorkDatabase.kt`: app-wide singleton `WorkDatabase.get(context)` (shared by app and widget).
+- `data/WorkRepository.kt`: records KOM/GÅ, **rejects KOM→KOM and GÅ→GÅ** by checking the last event.
+- `WorkViewModel.kt` (moved out of MainActivity): `WorkUiState(isWorking, todayTotalSeconds)`, `refresh()` reads Room; `todayTotalSeconds` is still 0 — computed in Phase 4.
+- Unit tests `data/WorkRepositoryTest.kt`: 5/5 pass (first event OK, double-KOM rejected, double-GÅ rejected, multiple periods per day, seconds ignored).
+- `.\gradlew :app:assembleDebug :app:testDebugUnitTest` → **BUILD SUCCESSFUL**. Committed.

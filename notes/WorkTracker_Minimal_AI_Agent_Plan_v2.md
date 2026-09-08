@@ -228,4 +228,5 @@ Do not skip ahead unless explicitly instructed.
 
 # Result — all phases complete
 Definition of Done: app builds ✅, widget exists ✅, KOM/GÅ from widget ✅, events in Room (seconds ignored) ✅, multiple periods/day ✅, daily total ✅, widget shows today total ✅, local storage ✅, survives restart ✅, CSV export (one row per event) ✅.
-Remaining manual check: test the widget on a real device (KOM/GÅ buttons + status updates + CSV save).
+Device verification (emulator, Pixel 7 Pro, 2026-09-08): widget added to home screen renders status + "I dag" total; KOM/GÅ buttons flip state live and update the widget; app screen, CSV export (6 events, correct format) all verified.
+Fix from device testing: removed the explicit `EventTypeConverter` in `WorkDatabase` (Room 2.6+ auto-registers converters; the double registration crashed `WorkDatabase.get()` at startup — caught on the emulator, not by unit tests).

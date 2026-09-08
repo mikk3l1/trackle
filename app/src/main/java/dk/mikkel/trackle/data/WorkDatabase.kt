@@ -4,17 +4,12 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverter
 
+/** Room handles enum columns (like [EventType]) natively. */
 @Database(entities = [WorkEvent::class], version = 1)
 abstract class WorkDatabase : RoomDatabase() {
 
     abstract fun workEventDao(): WorkEventDao
-
-    class EventTypeConverter {
-        @TypeConverter fun toDb(value: EventType): String = value.name
-        @TypeConverter fun fromDb(value: String): EventType = EventType.valueOf(value)
-    }
 
     companion object {
         @Volatile
@@ -26,10 +21,7 @@ abstract class WorkDatabase : RoomDatabase() {
                     context.applicationContext,
                     WorkDatabase::class.java,
                     "worktracker"
-                )
-                    .addTypeConverter(EventTypeConverter())
-                    .build()
-                    .also { instance = it }
+                ).build().also { instance = it }
             }
     }
 }

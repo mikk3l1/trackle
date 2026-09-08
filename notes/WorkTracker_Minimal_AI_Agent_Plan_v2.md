@@ -213,3 +213,19 @@ Do not skip ahead unless explicitly instructed.
 - `MainActivity` calls `refresh()` on resume so widget-recorded events show up.
 - Unit tests `domain/WorkStatsTest.kt`: 5/5 pass (empty day, one period, multiple periods/day, active period with current time, other dates excluded).
 - `.\gradlew :app:assembleDebug :app:testDebugUnitTest` → **BUILD SUCCESSFUL** (all 11 tests pass). Committed (with Phase 3).
+
+## Phase 5 – ✅ DONE (2026-09-08)
+- `domain/WorkCsv.kt`: `WorkCsv.toCsv(events, zone)` → `ID,Timestamp,Type`, one row per raw event, `yyyy-MM-dd'T'HH:mm` local timestamps, `KOM`/`GÅ` labels (`EventType.display` added).
+- `WorkViewModel.csvExport()` returns the CSV string of all events.
+- `MainActivity`: "Eksportér CSV" now launches the standard Android "Save as…" (SAF `ACTION_CREATE_DOCUMENT`, default name `trackle-YYYY-MM-DD.csv`) and writes the CSV; error shows a toast.
+- Unit tests `domain/WorkCsvTest.kt`: 2/2 pass (one row per event incl. `GÅ`, header-only when empty).
+- `.\gradlew :app:assembleDebug :app:testDebugUnitTest` → **BUILD SUCCESSFUL** (13/13 tests). Committed.
+
+## Phase 6 – ✅ DONE (2026-09-08)
+- Widget: KOM = green (`0xFF2E7D32`), GÅ = red (`0xFFC62828`), white bold labels — clearly distinguishable; status, today's total, light/dark (Glance 1.1.x `ColorProvider(value class)` + `ColorProviders(light, dark)` already applied).
+- No new features added (per plan).
+- `.\gradlew :app:assembleDebug :app:testDebugUnitTest` → **BUILD SUCCESSFUL** (13/13 tests). Committed.
+
+# Result — all phases complete
+Definition of Done: app builds ✅, widget exists ✅, KOM/GÅ from widget ✅, events in Room (seconds ignored) ✅, multiple periods/day ✅, daily total ✅, widget shows today total ✅, local storage ✅, survives restart ✅, CSV export (one row per event) ✅.
+Remaining manual check: test the widget on a real device (KOM/GÅ buttons + status updates + CSV save).

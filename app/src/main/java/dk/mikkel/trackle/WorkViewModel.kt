@@ -7,6 +7,7 @@ import dk.mikkel.trackle.data.EventType
 import dk.mikkel.trackle.data.WorkDatabase
 import dk.mikkel.trackle.data.WorkEvent
 import dk.mikkel.trackle.data.WorkRepository
+import dk.mikkel.trackle.domain.WorkCsv
 import dk.mikkel.trackle.domain.WorkStats
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,6 +53,9 @@ class WorkViewModel(appContext: Context) : ViewModel() {
         }
     }
 
-    /** All events for CSV export (Phase 5). */
+    /** All events for CSV export. */
     suspend fun allEvents(): List<WorkEvent> = dao.allEvents()
+
+    /** CSV of all raw events (one row per event), ready to be written to a file. */
+    suspend fun csvExport(): String = WorkCsv.toCsv(dao.allEvents(), ZoneId.systemDefault())
 }

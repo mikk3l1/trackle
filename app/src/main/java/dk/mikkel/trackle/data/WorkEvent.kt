@@ -4,7 +4,10 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 /** One KOM or GÅ press. Raw events are the source of truth (see plan Phase 5). */
-enum class EventType { KOM, GA }
+enum class EventType(val display: String) {
+    KOM("KOM"),
+    GA("GÅ")
+}
 
 @Entity(tableName = "work_events")
 data class WorkEvent(

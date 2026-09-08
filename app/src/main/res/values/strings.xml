@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">trackle</string>
+    <string name="widget_description">Work time: status and today\'s total</string>
 </resources>

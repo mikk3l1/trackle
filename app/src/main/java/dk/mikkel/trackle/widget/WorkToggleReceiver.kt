@@ -14,6 +14,9 @@ import kotlinx.coroutines.launch
 /** Receiver for the KOM widget button. */
 class WorkKomReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        // Glance delivers widget button presses as an explicit broadcast targeting
+        // this component (no action set). Ignore anything else.
+        if (intent.component?.className != WorkKomReceiver::class.java.name) return
         recordEvent(context, EventType.KOM)
     }
 }
@@ -21,6 +24,7 @@ class WorkKomReceiver : BroadcastReceiver() {
 /** Receiver for the GÅ widget button. */
 class WorkGaReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.component?.className != WorkGaReceiver::class.java.name) return
         recordEvent(context, EventType.GA)
     }
 }

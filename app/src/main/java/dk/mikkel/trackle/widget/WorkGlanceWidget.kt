@@ -24,6 +24,7 @@ import androidx.glance.unit.ColorProvider
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
+import androidx.glance.layout.padding
 import androidx.glance.layout.width
 import androidx.glance.material3.ColorProviders
 import androidx.glance.text.FontWeight
@@ -35,8 +36,16 @@ import dk.mikkel.trackle.data.WorkEvent
 import dk.mikkel.trackle.data.WorkRepository
 import dk.mikkel.trackle.domain.WorkStats
 import dk.mikkel.trackle.ui.formatDuration
+import dk.mikkel.trackle.ui.theme.CardSurfaceDark
+import dk.mikkel.trackle.ui.theme.CardSurfaceLight
+import dk.mikkel.trackle.ui.theme.ClockOutRed
+import dk.mikkel.trackle.ui.theme.TrackleBlue
+import dk.mikkel.trackle.ui.theme.TrackleBlueDark
+import dk.mikkel.trackle.ui.theme.WorkingGreen
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 /**
  * Home-screen widget: current work status, today's total,
@@ -51,7 +60,8 @@ class WorkGlanceWidget : GlanceAppWidget() {
 
     private suspend fun render(events: List<WorkEvent>) {
         val zone = ZoneId.systemDefault()
-        val isWorking = events.lastOrNull()?.type == EventType.KOM
+        val last = events.lastOrNull()
+        val isWorking = last?.type == EventType.KOM
         val now = WorkRepository.currentMinuteTimestampSeconds()
         val todayText = formatDuration(
             WorkStats.totalSecondsForDay(
@@ -61,51 +71,96 @@ class WorkGlanceWidget : GlanceAppWidget() {
                 nowEpochSeconds = now
             )
         )
+        val sessionStartText = if (isWorking && last != null) {
+            "Siden " + timeFormatter().format(
+                Instant.ofEpochSecond(last.timestamp).atZone(zone).toLocalTime()
+            )
+        } else null
         provideContent {
-            AppWidgetContent(isWorking = isWorking, todayText = todayText)
+            AppWidgetContent(
+                isWorking = isWorking,
+                todayText = todayText,
+                sessionStartText = sessionStartText
+            )
         }
     }
 
+    private fun timeFormatter(): DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
     @Composable
-    private fun AppWidgetContent(isWorking: Boolean, todayText: String) {
+    private fun AppWidgetContent(
+        isWorking: Boolean,
+        todayText: String,
+        sessionStartText: String?
+    ) {
         GlanceTheme(
-            colors = ColorProviders(lightColorScheme(), darkColorScheme())
+            colors = ColorProviders(
+                lightColorScheme(
+                    primary = TrackleBlue,
+                    onSurface = Color(0xFF1F2430),
+                    surfaceVariant = CardSurfaceLight,
+                    onSurfaceVariant = Color(0xFF4A5165)
+                ),
+                darkColorScheme(
+                    primary = TrackleBlueDark,
+                    onSurface = Color(0xFFE8ECF7),
+                    surfaceVariant = CardSurfaceDark,
+                    onSurfaceVariant = Color(0xFFA5ADC2)
+                )
+            )
         ) {
             Column(
                 modifier = GlanceModifier
                     .fillMaxSize()
-                    .background(GlanceTheme.colors.widgetBackground),
+                    .background(GlanceTheme.colors.surfaceVariant)
+                    .padding(10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (isWorking) "På arbejde" else "Ikke på arbejde",
+                    text = if (isWorking) "PÅ ARBEJDE" else "HJEMME",
                     style = TextStyle(
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Bold,
+                        color = if (isWorking) ColorProvider(WorkingGreen)
+                        else GlanceTheme.colors.onSurface
                     ),
                     maxLines = 1
                 )
                 Spacer(GlanceModifier.height(2.dp))
                 Text(
-                    text = "I dag: $todayText",
-                    style = TextStyle(fontSize = 13.sp),
+                    text = "I dag · $todayText",
+                    style = TextStyle(
+                        fontSize = 13.sp,
+                        color = GlanceTheme.colors.onSurfaceVariant
+                    ),
                     maxLines = 1
                 )
-                Spacer(GlanceModifier.height(8.dp))
+                if (sessionStartText != null) {
+                    Spacer(GlanceModifier.height(2.dp))
+                    Text(
+                        text = sessionStartText,
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            color = GlanceTheme.colors.onSurfaceVariant
+                        ),
+                        maxLines = 1
+                    )
+                }
+                Spacer(GlanceModifier.height(10.dp))
                 Row(
                     modifier = GlanceModifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     ActionButton(
                         label = "KOM",
-                        background = ColorProvider(Color(0xFF2E7D32)), // green = starte (start)
+                        background = ColorProvider(WorkingGreen), // brand green = clock in
                         onClick = actionSendBroadcast<WorkKomReceiver>(),
                         modifier = GlanceModifier.defaultWeight()
                     )
                     Spacer(GlanceModifier.width(8.dp))
                     ActionButton(
                         label = "GÅ",
-                        background = ColorProvider(Color(0xFFC62828)), // red = slutte (stop)
+                        background = ColorProvider(ClockOutRed), // brand red = clock out
                         onClick = actionSendBroadcast<WorkGaReceiver>(),
                         modifier = GlanceModifier.defaultWeight()
                     )

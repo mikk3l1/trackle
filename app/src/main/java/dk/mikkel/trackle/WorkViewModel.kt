@@ -3,12 +3,14 @@ package dk.mikkel.trackle
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.glance.appwidget.updateAll
 import dk.mikkel.trackle.data.EventType
 import dk.mikkel.trackle.data.WorkDatabase
 import dk.mikkel.trackle.data.WorkEvent
 import dk.mikkel.trackle.data.WorkRepository
 import dk.mikkel.trackle.domain.WorkCsv
 import dk.mikkel.trackle.domain.WorkStats
+import dk.mikkel.trackle.widget.WorkGlanceWidget
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -46,12 +48,19 @@ class WorkViewModel(appContext: Context) : ViewModel() {
     /** Toggles between clock-in (KOM) and clock-out (GÅ), honoring the repository's sequence guard. */
     fun toggleWork() {
         viewModelScope.launch {
-            val succeeded = if (_state.value.isWorking) {
+            // Decide from the source of truth (the DB), not the (possibly stale)
+            // UI state — a widget tap may have recorded an event while we're open.
+            val isWorking = dao.lastEvent()?.type == EventType.KOM
+            val succeeded = if (isWorking) {
                 repository.recordGa()
             } else {
                 repository.recordKom()
             }
-            if (succeeded) refresh()
+            if (succeeded) {
+                refresh()
+                // Keep the home-screen widget in sync with in-app toggles.
+                WorkGlanceWidget().updateAll(appContext)
+            }
         }
     }
 

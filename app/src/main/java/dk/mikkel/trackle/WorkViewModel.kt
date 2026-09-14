@@ -12,25 +12,47 @@ import dk.mikkel.trackle.domain.WorkStats
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.temporal.TemporalAdjusters
 
 /** Immutable snapshot of what the UI displays. */
 data class WorkUiState(
     val isWorking: Boolean = false,
-    val todayTotalSeconds: Long = 0L
+    val todayTotalSeconds: Long = 0L,
+    val weekTotalSeconds: Long = 0L,
+    val currentSessionStartEpochSeconds: Long? = null,
+    val lastEventEpochSeconds: Long? = null,
+    val lastEventType: EventType? = null,
+    val recentEvents: List<WorkEvent> = emptyList(),
+    val todayEventCount: Int = 0
 )
 
 class WorkViewModel(appContext: Context) : ViewModel() {
 
     private val appContext = appContext.applicationContext
     private val dao = WorkDatabase.get(appContext).workEventDao()
+    private val repository = WorkRepository(dao)
 
     private val _state = MutableStateFlow(WorkUiState())
     val state: StateFlow<WorkUiState> = _state
 
     init {
         refresh()
+    }
+
+    /** Toggles between clock-in (KOM) and clock-out (GÅ), honoring the repository's sequence guard. */
+    fun toggleWork() {
+        viewModelScope.launch {
+            val succeeded = if (_state.value.isWorking) {
+                repository.recordGa()
+            } else {
+                repository.recordKom()
+            }
+            if (succeeded) refresh()
+        }
     }
 
     /**
@@ -41,14 +63,30 @@ class WorkViewModel(appContext: Context) : ViewModel() {
         viewModelScope.launch {
             val events = dao.allEvents()
             val zone = ZoneId.systemDefault()
+            val now = WorkRepository.currentMinuteTimestampSeconds()
+            val today = LocalDate.now(zone)
+            val last = events.lastOrNull()
+            val isWorking = last?.type == EventType.KOM
+
+            // Week total = sum of the current ISO week (Mon–Sun).
+            val weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+            var weekTotal = 0L
+            for (offset in 0L..6L) {
+                weekTotal += WorkStats.totalSecondsForDay(events, weekStart.plusDays(offset), zone, now)
+            }
+
+            val todayEventCount = events.count { localDayOf(it.timestamp, zone) == today }
+            val recentEvents = events.sortedByDescending { it.id }.take(8)
+
             _state.value = WorkUiState(
-                isWorking = events.lastOrNull()?.type == EventType.KOM,
-                todayTotalSeconds = WorkStats.totalSecondsForDay(
-                    events = events,
-                    day = LocalDate.now(zone),
-                    zone = zone,
-                    nowEpochSeconds = WorkRepository.currentMinuteTimestampSeconds()
-                )
+                isWorking = isWorking,
+                todayTotalSeconds = WorkStats.totalSecondsForDay(events, today, zone, now),
+                weekTotalSeconds = weekTotal,
+                currentSessionStartEpochSeconds = if (isWorking) last?.timestamp else null,
+                lastEventEpochSeconds = last?.timestamp,
+                lastEventType = last?.type,
+                recentEvents = recentEvents,
+                todayEventCount = todayEventCount
             )
         }
     }
@@ -58,4 +96,7 @@ class WorkViewModel(appContext: Context) : ViewModel() {
 
     /** CSV of all raw events (one row per event), ready to be written to a file. */
     suspend fun csvExport(): String = WorkCsv.toCsv(dao.allEvents(), ZoneId.systemDefault())
+
+    private fun localDayOf(epochSeconds: Long, zone: ZoneId): LocalDate =
+        Instant.ofEpochSecond(epochSeconds).atZone(zone).toLocalDate()
 }

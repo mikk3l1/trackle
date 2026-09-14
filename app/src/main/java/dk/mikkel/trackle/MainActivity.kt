@@ -43,8 +43,8 @@ class MainActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     val state by workViewModel.state.collectAsState()
                     HomeScreen(
-                        isWorking = state.isWorking,
-                        todayTotal = state.todayTotalSeconds,
+                        state = state,
+                        onToggle = { workViewModel.toggleWork() },
                         onExport = {
                             val defaultName = "trackle-" +
                                 LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ".csv"
